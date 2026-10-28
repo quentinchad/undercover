@@ -9,6 +9,10 @@ import {
 } from "./src/game.js";
 
 const PORT = Number(process.env.PORT) || 3000;
+// Préfixe d'URL quand le jeu est servi dans un sous-dossier (ex. "/undercover")
+const BASE_PATH = (process.env.BASE_PATH || "").replace(/\/+$/, "");
+// Sites autorisés à se connecter quand la page est hébergée ailleurs (ex. "https://www.quentin-chirat.com")
+const CORS_ORIGINS = (process.env.CORS_ORIGINS || "").split(",").map((o) => o.trim()).filter(Boolean);
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ";
 const CODE_LENGTH = 5;
 const MAX_ROOMS = 2000;
@@ -19,11 +23,17 @@ const RATE_MAX_EVENTS = 40;
 
 const app = express();
 app.disable("x-powered-by");
-app.use(express.static(join(dirname(fileURLToPath(import.meta.url)), "public")));
-app.get("/health", (_req, res) => res.json({ ok: true, rooms: rooms.size }));
+app.set("strict routing", true);
+if (BASE_PATH) app.get(BASE_PATH, (req, res) => res.redirect(301, BASE_PATH + "/" + req.url.slice(BASE_PATH.length)));
+app.use(BASE_PATH || "/", express.static(join(dirname(fileURLToPath(import.meta.url)), "public")));
+app.get(`${BASE_PATH}/health`, (_req, res) => res.json({ ok: true, rooms: rooms.size }));
 
 const httpServer = createServer(app);
-const io = new Server(httpServer, { maxHttpBufferSize: 10_000 });
+const io = new Server(httpServer, {
+  maxHttpBufferSize: 10_000,
+  path: `${BASE_PATH}/socket.io`,
+  ...(CORS_ORIGINS.length && { cors: { origin: CORS_ORIGINS } }),
+});
 
 const rooms = new Map(); // code -> salon
 const lastActivity = new Map(); // code -> timestamp
@@ -189,5 +199,5 @@ setInterval(() => {
 }, CLEANUP_INTERVAL_MS).unref();
 
 httpServer.listen(PORT, () => {
-  console.log(`Undercover prêt sur http://localhost:${PORT}`);
+  console.log(`Undercover prêt sur http://localhost:${PORT}${BASE_PATH}/`);
 });

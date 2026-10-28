@@ -37,6 +37,15 @@ Le jeu est un serveur Node.js (Express + Socket.IO) qui garde les salons en mém
 
 L'offre gratuite met le serveur en veille après 15 min sans visite : le premier chargement prend alors ~30 s, et les salons en cours sont perdus au redémarrage.
 
+### Dans un sous-dossier d'un site existant
+
+- **Le même serveur sert la page et le jeu** (VPS, proxy inverse vers `/undercover`) : définissez `BASE_PATH=/undercover`, et le jeu répond sur `/undercover/`.
+- **La page est sur un hébergement mutualisé sans Node** (ex. OVH) : faites tourner le serveur ailleurs (Render…) avec `CORS_ORIGINS=https://www.mon-site.com`, puis générez la page statique et déposez le contenu de `dist/` dans le dossier `undercover/` du site :
+
+  ```bash
+  npm run build:static -- https://mon-serveur-undercover.onrender.com
+  ```
+
 ### Autres options
 
 Railway, Fly.io ou un VPS fonctionnent de la même façon : `npm install` puis `npm start`, avec la variable d'environnement `PORT` si besoin. Gardez **une seule instance** : les salons sont en mémoire et ne sont pas partagés entre plusieurs instances.

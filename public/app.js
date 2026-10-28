@@ -10,7 +10,10 @@ const WORD_REVEAL_MS = 5000;
 const app = document.getElementById("app");
 const toastEl = document.getElementById("toast");
 const offlineEl = document.getElementById("offline");
-const socket = io();
+// UNDERCOVER_SERVER est défini quand la page est hébergée à part du serveur de jeu (voir scripts/build-static.js) ;
+// sinon le serveur est celui de la page, à la racine comme dans un sous-dossier (ex. /undercover/).
+const SERVER_URL = window.UNDERCOVER_SERVER;
+const socket = SERVER_URL ? io(SERVER_URL) : io({ path: `${location.pathname.replace(/[^/]*$/, "")}socket.io` });
 
 let view = null; // état envoyé par le serveur
 let ui = { wordShown: false, busy: false };
